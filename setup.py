@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 import versioneer
 
 setup(
-        name='metadb',
+        name='esgfrequest',
         packages=find_packages('src'),
         package_dir={'': 'src'},
         version=versioneer.get_version(),
@@ -13,10 +13,10 @@ setup(
         install_requires=[
             'sqlalchemy',
             'netcdf4',
-            'flask',
+            'psycopg2',
             ],
         entry_points={
             'console_scripts': [
-                'metadb = metadb.cli:cli',
+                'esgfrequest = esgfrequest.cli:cli',
                 ]}
         )

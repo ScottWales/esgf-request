@@ -51,8 +51,7 @@ def search_raw(
             except TypeError:
                 params[key] = value
 
-    r = requests.get(search_url, params=params)
-    #print(r.url)
+    r = requests.get(search_url, params=params, timeout=5)
 
     r.raise_for_status()
 
@@ -98,7 +97,7 @@ def search_files_generator(**kwargs):
     Returns a geneartor producing matching files
     """
     offset = 0
-    limit = kwargs.pop('limit', 1000)
+    limit = kwargs.pop('limit', 100)
 
     while True:
         r = search_files(offset=offset, limit=limit, **kwargs)

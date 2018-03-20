@@ -17,11 +17,13 @@ from __future__ import print_function
 from argparse import ArgumentParser
 from itertools import islice
 from distutils.util import strtobool
-import esgf
+import esgfrequest.esgf as esgf
 import six
 import sqlite3
 import os
 from datetime import datetime
+import requests
+import sqlalchemy
 
 text_facets = [
         'query',
@@ -64,29 +66,32 @@ bool_facets = {
             },
         }
 
-def connect_db():
-    conn = sqlite3.connect('checksums.db')
-    return conn.cursor()
+def connect_db(user):
+    from .db import connect, Session
+    connect('postgresql://130.56.244.107:5432/postgres', user)
+    return Session()
 
-def search_for_matches(cursor, filename, checksum):
+def search_for_matches(session, filename, checksum):
+    from .model import Checksum, Basename
+    from sqlalchemy import or_
     partial = 0
 
-    cursor.execute('SELECT count(md5) FROM checksums WHERE md5 = ? OR sha256 = ? GROUP BY md5',
-                   (checksum, checksum))
-    r = cursor.fetchone()
-    if r is None:
-        exact = 0
-    else:
-        exact = 1
-        return (exact, partial)
+    q = (session
+            .query(Checksum.md5)
+            .filter(or_(Checksum.md5 == checksum, Checksum.sha256 == checksum))
+            .distinct()
+            )
+    exact = q.count()
 
-    cursor.execute('SELECT count(filename) FROM checksums WHERE filename = ? GROUP BY filename',
-                   (filename,))
-    r = cursor.fetchone()
-    if r is None:
+    q = (session
+            .query(Basename.basename)
+            .filter(Basename.basename == filename)
+            .distinct()
+            )
+    partial = q.count()
+
+    if exact == 1:
         partial = 0
-    else:
-        partial = 1
 
     return (exact, partial)
 
@@ -116,14 +121,28 @@ def cli():
             help="Maximum number of files to search",
             type=int,
             default=1000)
+    parser.add_argument('--user',
+            help="Username to connect to the database",
+            default=os.environ['USER'])
 
     args = vars(parser.parse_args())
 
     limit = args.pop('limit')
 
-    cursor = connect_db()
+    try:
+        cursor = connect_db(user=args.pop('user'))
+    except sqlalchemy.exc.OperationalError as e:
+        print("\nError connecting to MAS database:")
+        print(e)
+        return -1
 
-    results, count = search_esgf(args, limit, cursor)
+    try:
+        results, count = search_esgf(args, limit, cursor)
+
+    except requests.exceptions.Timeout as e:
+        print("\n\nRequest timed out")
+        print(e.request.url)
+        return -1
 
     print_results(results, count, limit)
 
@@ -179,12 +198,12 @@ def print_results(results, count, limit):
     partial_size = sum([v['size'] if v['partial'] > 0 else 0 for v in six.itervalues(results)])
 
     print()
-    print("Total missing:   % 4d files, %s"%(
-        total_misses, size_str(missing_size)))
     print("Partial matches: % 4d files, %s (e.g. different versions)"%(
         total_partial,
         size_str(partial_size))
         )
+    print("Missing files:   % 4d files, %s"%(
+        total_misses, size_str(missing_size)))
 
 def make_request(results):
     total_misses = sum([v['misses'] for v in six.itervalues(results)])
