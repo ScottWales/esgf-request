@@ -51,7 +51,7 @@ def search_raw(
             except TypeError:
                 params[key] = value
 
-    r = requests.get(search_url, params=params, timeout=5)
+    r = requests.get(search_url, params=params, timeout=30)
 
     r.raise_for_status()
 
