@@ -12,7 +12,6 @@ setup(
 
         install_requires=[
             'sqlalchemy',
-            'netcdf4',
             'psycopg2',
             ],
         entry_points={

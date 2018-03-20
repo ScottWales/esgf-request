@@ -25,26 +25,42 @@ from datetime import datetime
 import requests
 import sqlalchemy
 
-text_facets = [
-        'query',
-        'title',
-        'version',
-        'checksum',
-        'checksum_type',
-        'start',
-        'end',
-        'cf_standard_name',
-        'ensemble',
-        'experiment',
-        'institute',
-        'cmor_table',
-        'model',
-        'project',
-        'realm',
-        'time_frequency',
-        'variable',
-        'variable_long_name',
-        ]
+text_facets = {
+        'query': {},
+        'title': {},
+        'version': {
+            'alt': ['-ve'],
+            },
+        'checksum': {},
+        'checksum_type': {},
+        'start': {},
+        'end': {},
+        'cf_standard_name': {},
+        'ensemble': {
+            'alt': ['-en'],
+            },
+        'experiment': {
+            'alt': ['-e'],
+            },
+        'institute': {},
+        'cmor_table': {
+            'alt': ['-t', '--mip'],
+            },
+        'model': {
+            'alt': ['-m'],
+            },
+        'project': {
+            'alt': ['-p'],
+            },
+        'realm': {},
+        'time_frequency': {
+            'alt': ['-f', '--frequency'],
+            },
+        'variable': {
+            'alt': ['-v'],
+            },
+        'variable_long_name': {},
+        }
 bool_facets = {
         'replica': {
             'help': "Return only replicas (true), only orignals (false, default), or all (all)",
@@ -107,8 +123,8 @@ def bool_or_all_arg(value):
 def cli():
     parser = ArgumentParser()
 
-    for f in text_facets:
-        parser.add_argument('--%s'%f, action='append', nargs='+')
+    for f, args in six.iteritems(text_facets):
+        parser.add_argument('--%s'%f, *args.pop('alt',[]), action='append', nargs='+', **args)
 
     for f, args in six.iteritems(bool_facets):
         parser.add_argument('--%s'%f, type=bool_or_all_arg, **args)
