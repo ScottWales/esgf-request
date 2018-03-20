@@ -1,0 +1,2 @@
+include versioneer.py
+include src/esgfrequest/_version.py

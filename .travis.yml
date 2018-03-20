@@ -1,0 +1,26 @@
+language: python
+python:
+    - '2.7'
+    - '3.6'
+install:
+    - pip install --upgrade pytest coverage pytest-cov
+    - pip install -e .
+before_script:
+    - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+    - chmod +x ./cc-test-reporter
+    - ./cc-test-reporter before-build
+script:
+    - py.test --cov=metadb --cov-report xml
+after_script:
+    # - coverage xml
+    - cat coverage.xml
+    - ./cc-test-reporter --debug after-build --exit-code $TRAVIS_TEST_RESULT
+# deploy:
+#   provider: pypi
+#   user:
+#   password:
+#     secure: 
+#   on:
+#     tags: true
+#     repo: {{cookiecutter.github_account}}/{{cookiecutter.repo_name}}
+#   distributions: "sdist bdist_wheel"
