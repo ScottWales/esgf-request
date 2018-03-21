@@ -282,15 +282,15 @@ def make_request(results):
         request_download = input_bool("\nSubmit a request for %s of missing data? (yes/[no]) "%(size_str(missing_size)))
         if request_download:
             to_download = [(v['dataset_id'], v['variable']) for v in six.itervalues(results) if v['misses'] > 0]
-            render_request(to_download, prefix='request')
-            print("\nRequest submitted")
+            f = render_request(to_download, prefix='request')
+            print("\nRequest written to %s"%f)
 
     if total_partial > 0:
         request_update = input_bool("\nRequest updates for  %s of partial matches? (yes/[no]) "%(size_str(partial_size)))
         if request_update:
             to_download = [(v['dataset_id'], v['variable']) for v in six.itervalues(results) if v['partial'] > 0]
-            render_request(to_download, prefix='update')
-            print("\nRequest submitted")
+            f = render_request(to_download, prefix='update')
+            print("\nRequest written to %s"%f)
 
 
 def input_bool(prompt, default=False):
@@ -315,6 +315,7 @@ def render_request(to_download, prefix):
             for d in docs:
                 url = [u[0] for u in [u.split('|') for u in d['url']] if u[2] == 'HTTPServer'][0]
                 f.write("'%s' '%s' '%s' '%s'\n"%(d['title'], url, d['checksum_type'][0], d['checksum'][0]))
+    return requestfile
 
 
 def size_str(size):
