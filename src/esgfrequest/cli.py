@@ -60,6 +60,8 @@ text_facets = {
             'alt': ['-v'],
             },
         'variable_long_name': {},
+        'id': {},
+        'experiment_family': {},
         }
 bool_facets = {
         'replica': {
