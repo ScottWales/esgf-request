@@ -24,6 +24,8 @@ import os
 from datetime import datetime
 import requests
 import sqlalchemy
+import logging
+from . import logger
 
 text_facets = {
         'query': {},
@@ -179,10 +181,17 @@ def cli():
     parser.add_argument('--user',
             help="Username to connect to the database",
             default=os.environ['USER'])
+    parser.add_argument('--debug',
+            help="Print logging information",
+            action='store_true')
 
     args = vars(parser.parse_args())
 
     limit = args.pop('limit')
+
+    if args.pop('debug'):
+        logging.basicConfig()
+        logger.setLevel(logging.DEBUG)
 
     args = handle_negative_facets(args, text_facets)
 

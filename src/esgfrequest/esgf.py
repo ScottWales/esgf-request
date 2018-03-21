@@ -16,6 +16,7 @@
 from __future__ import print_function
 import requests
 import six
+from . import logger
 
 def search_raw(
         search_url='https://esgf.nci.org.au/esg-search/search',
@@ -52,6 +53,8 @@ def search_raw(
                 params[key] = value
 
     r = requests.get(search_url, params=params, timeout=30)
+
+    logger.info("GET %s"%r.url)
 
     r.raise_for_status()
 
