@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import print_function
-from argparse import ArgumentParser
+import argparse
 from itertools import islice
 from distutils.util import strtobool
 import esgfrequest.esgf as esgf
@@ -122,8 +122,45 @@ def bool_or_all_arg(value):
         else:
             raise
 
+def handle_negative_facets(args, facets):
+    """
+    convert 
+
+        'key': ['val1', '!val2']
+
+    to
+
+        'key': ['val1']
+        'key!': ['val2']
+    """
+
+    for key in six.iterkeys(facets):
+        if args.get(key) is not None:
+            negatives = list(filter(lambda x: x[0].startswith('^'), args[key]))
+            positives = list(filter(lambda x: not x[0].startswith('^'), args[key]))
+
+            args[key] = None
+            if len(positives) > 0:
+                args[key] = positives
+            if len(negatives) > 0:
+                args[key + '!'] = list(map(lambda x: x[0][1:], negatives))
+
+    return args
+
 def cli():
-    parser = ArgumentParser()
+    parser = argparse.ArgumentParser(description="""
+    Search ESGF, then return a list of the matching datasets and whether their
+    files have been downloaded to NCI.
+
+    ESGF search facets can be used to filter the results:
+
+        esgfrequest --model ACCESS1.0 ACCESS1.3
+
+    To invert the filter, prepend a '^'
+
+        esgfrequest --model ^ACCESS1.0 ^ACCESS1.3
+    """,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     for f, args in six.iteritems(text_facets):
         parser.add_argument('--%s'%f, *args.pop('alt',[]), action='append', nargs='+', **args)
@@ -146,6 +183,8 @@ def cli():
     args = vars(parser.parse_args())
 
     limit = args.pop('limit')
+
+    args = handle_negative_facets(args, text_facets)
 
     try:
         cursor = connect_db(user=args.pop('user'))
