@@ -305,7 +305,7 @@ def request_missing(results, request_partial):
     to_download = [(v['dataset_id'], v['variable']) for v in six.itervalues(results) if v['misses'] > 0]
     render_request(to_download, prefix='request')
 
-requestdir = '.'
+requestdir = os.environ['HOME']
 
 def render_request(to_download, prefix):
     requestfile = os.path.join(requestdir, '_'.join([prefix, os.environ['USER'], datetime.now().strftime("%Y%m%dT%H%M") + '.txt']))
